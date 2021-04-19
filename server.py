@@ -6,16 +6,21 @@ connPool = []
 
 def recv(conn):
     while True:
-        data = conn.recv(200)
-        if len(data) == 0:
-            conn.close()
-            try:
+        try:
+            data = conn.recv(200)
+            if len(data) == 0:
                 connPool.remove(conn)
-            except Exception as e:
-                print(e)
+                conn.close()
+                for c in connPool:
+                    c.send(("Current users : %d" % len(connPool)).encode('utf8'))
+                return
+        except:
+            connPool.remove(conn)
+            conn.close()
             for c in connPool:
                 c.send(("Current users : %d" % len(connPool)).encode('utf8'))
             return
+            
         message = "%s : %s" % (conn.getpeername()[1], data.decode('utf8'))
         print(message)
         for c in connPool:
@@ -39,7 +44,7 @@ def accept(mySocket):
 
 mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 mySocket.bind(("127.0.0.1", 7777))
-mySocket.listen(5)
+mySocket.listen(2)
 acceptThread = threading.Thread(target=accept, args=(mySocket,))
 acceptThread.daemon = True
 acceptThread.start()
